@@ -455,10 +455,10 @@ Filter selectivity = fraction of rows passing WHERE conditions
 Projection ratio = fraction of columns actually needed for the join
 
 Example:
-
-|Table	|Raw size	|Filter selectivity	|Projection ratio	|Shuffled bytes
-table1|	400 GB	|0.75	|0.40	|120 GB
-table2|	200 GB	|0.50	|0.30	|30 GB
+| Table  | Raw size | Filter selectivity | Projection ratio | Shuffled bytes |
+|--------|----------|--------------------|------------------|----------------|
+| table1 | 400 GB   | 0.75               | 0.40             | 120 GB         |
+| table2 | 200 GB   | 0.50               | 0.30             | 30 GB          |
 
 Then:
 
