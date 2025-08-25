@@ -436,15 +436,11 @@ times.
 ## 🧮 Formula (rule of thumb)
 
 If:
-- `T` = total amount of shuffled data (in **bytes**)  
-- `target_size` = desired size per shuffle partition (e.g. 128 MB = 134,217,728 bytes)  
+- `T` = total amount of shuffled data (in bytes)  
+- `target_size` = desired size per shuffle partition (e.g., 128 MB)  
 
-Then the **number of shuffle partitions** should be approximately:
-
-$$
-\text{num\_shuffle\_partitions} \approx \left\lceil \frac{T}{\text{target\_size}} \right\rceil
-$$
-
+Then the number of shuffle partitions can be written as: num_shuffle_partitions ≈ ceil(T / target_size)
+- Here `ceil()` means round up to the nearest integer.
 ------------------------------------------------------------------------
 
 ## 🔹 Example calculation
