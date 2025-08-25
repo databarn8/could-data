@@ -420,3 +420,85 @@ Use this only if you’ve profiled and are happy with task size/runtime.
 - Tune by measuring **task duration** and **OOM/GC** instead of trying to match partitions to core counts exactly.
 
 If you share rough sizes of the two Delta tables **after filters** and a sense of join selectivity, I can plug in the numbers and give you a concrete per-job config (including whether broadcast join is viable).
+
+# How to Decide Shuffle Partition Number in Spark
+
+## 🎯 Goal of Shuffle Partitioning
+
+Each shuffle partition (i.e. each reduce task in a join or aggregation)
+should ideally process **\~128 MB** of data (or sometimes up to 256 MB)
+so that: - Tasks are **big enough** to amortize scheduling overhead,\
+- But **not so big** that a single task risks OOM or long straggler
+times.
+
+------------------------------------------------------------------------
+
+## 🧮 Formula (rule of thumb)
+
+If: - `T` = total amount of shuffled data (in **bytes**)\
+- `target_size` = desired size per shuffle partition (e.g. 128 MB =
+134,217,728 bytes)
+
+Then the **number of shuffle partitions** should be approximately:
+
+\[ `\text{num\_shuffle\_partitions}`{=tex}
+`\approx `{=tex}`\left`{=tex}`\lceil `{=tex}`\frac{T}{\text{target\_size}}`{=tex}
+`\right`{=tex}`\rceil`{=tex} \]
+
+------------------------------------------------------------------------
+
+## 🔹 Example calculation
+
+Let's say your join shuffles **600 GB** of data total (after filters,
+projections, etc.):
+
+-   ( T = 600 `\times 1024`{=tex} ,`\text{MB}`{=tex} = 614,400
+    ,`\text{MB}`{=tex} )\
+-   Target size = 128 MB\
+-   ( 614,400 / 128 = 4800 )
+
+👉 So you'd want **\~4800 shuffle partitions**.
+
+------------------------------------------------------------------------
+
+## 🔹 With Your Cluster in Mind
+
+-   Cluster: **50 total cores (5 workers × 10 cores)**\
+-   You don't need 1 partition per core; Spark will happily schedule
+    more tasks than cores (tasks run in waves).\
+-   Typical practice: have **2--4× more shuffle partitions than cores**
+    *minimum* (so at least 100--200), but the upper bound is driven by
+    data volume and target partition size.
+
+------------------------------------------------------------------------
+
+## 🔹 When AQE (Adaptive Query Execution) is ON
+
+-   You don't need to hand-tune.\
+-   Set `spark.sql.shuffle.partitions` to a high-ish number (e.g. 2000,
+    5000, 10000 depending on data scale).\
+-   Spark will automatically coalesce small partitions until each is
+    \~128 MB (`spark.sql.adaptive.shuffle.targetPostShuffleInputSize`).
+
+------------------------------------------------------------------------
+
+## ✅ Takeaway Logic
+
+1.  Estimate **total shuffled data size**.\
+2.  Divide by **target per-partition size (128 MB)** → that's your
+    **ideal shuffle partition count**.\
+3.  Ensure it's **at least 2--4× total cluster cores** to keep CPUs
+    busy.\
+4.  If using **AQE**, just over-provision (say 2--4× the ideal) and
+    Spark will coalesce.
+
+------------------------------------------------------------------------
+
+## 🔹 Clarification on Data Size
+
+The **shuffled data size is not simply the size of table1 + table2 on
+disk**.\
+- It's the amount of data Spark must **repartition** on the join key.\
+- This depends on filters, projections, join selectivity, skew, etc.\
+- Spark UI (SQL tab → "Shuffle Read Size") shows the actual value after
+execution.
