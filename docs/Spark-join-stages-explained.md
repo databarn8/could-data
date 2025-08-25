@@ -441,6 +441,32 @@ If:
 
 Then the number of shuffle partitions can be written as: num_shuffle_partitions ≈ ceil(T / target_size)
 - Here `ceil()` means round up to the nearest integer.
+
+But to be precise:
+
+T is the total shuffled data that Spark actually needs to repartition for the join or aggregation.
+
+Roughly, you can compute it as:
+𝑇 ≈ shuffled bytes from table1 + shuffled bytes from table2
+
+Where for each table:
+shuffled bytes ≈ raw table size × filter selectivity × projection ratio
+Filter selectivity = fraction of rows passing WHERE conditions
+Projection ratio = fraction of columns actually needed for the join
+
+Example:
+
+|Table	|Raw size	|Filter selectivity	|Projection ratio	|Shuffled bytes
+table1|	400 GB	|0.75	|0.40	|120 GB
+table2|	200 GB	|0.50	|0.30	|30 GB
+
+Then:
+
+𝑇 ≈ 120 + 30 = 150 GB
+
+This T is what you divide by your target partition size (e.g., 128 MB) to get num_shuffle_partitions.
+
+So yes, conceptually it’s like “sum of table1 + table2,” but only counting the actual rows and columns that go through the shuffle — not the raw full table size on disk.- 
 ------------------------------------------------------------------------
 
 ## 🔹 Example calculation
