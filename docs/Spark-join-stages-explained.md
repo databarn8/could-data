@@ -435,15 +435,15 @@ times.
 
 ## 🧮 Formula (rule of thumb)
 
-If: - `T` = total amount of shuffled data (in **bytes**)\
-- `target_size` = desired size per shuffle partition (e.g. 128 MB =
-134,217,728 bytes)
+If:
+- `T` = total amount of shuffled data (in **bytes**)  
+- `target_size` = desired size per shuffle partition (e.g. 128 MB = 134,217,728 bytes)  
 
 Then the **number of shuffle partitions** should be approximately:
 
-\[ `\text{num\_shuffle\_partitions}`{=tex}
-`\approx `{=tex}`\left`{=tex}`\lceil `{=tex}`\frac{T}{\text{target\_size}}`{=tex}
-`\right`{=tex}`\rceil`{=tex} \]
+$$
+\text{num\_shuffle\_partitions} \approx \left\lceil \frac{T}{\text{target\_size}} \right\rceil
+$$
 
 ------------------------------------------------------------------------
 
