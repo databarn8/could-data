@@ -1,4 +1,4 @@
----
+
 # Fixing NVIDIA/CUDA Breakage After Kernel Update on Ubuntu 22.04 (Dual RTX 3090)
 
 ## Problem
